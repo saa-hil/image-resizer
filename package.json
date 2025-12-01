@@ -1,0 +1,42 @@
+{
+  "name": "image-resizer",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts src/workers/image-variants.worker.ts --outdir ./dist --target bun",
+    "start": "bun dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "type-check": "tsc --noEmit",
+    "resize:worker": "bun --watch src/workers/image-variants.worker.ts",
+    "resize:worker:prod": "bun run dist/workers/image-variants.worker.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.940.0",
+    "@elysiajs/cors": "^1.0.0",
+    "bullmq": "^5.65.0",
+    "elysia": "^1.0.0",
+    "elysia-helmet": "^1.0.1",
+    "elysia-rate-limit": "^3.0.0",
+    "ioredis": "^5.8.2",
+    "mongoose": "^9.0.0",
+    "sharp": "^0.34.5",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/ioredis": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
