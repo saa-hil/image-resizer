@@ -25,7 +25,7 @@ export class S3Service {
    * Get the original S3 key for an image
    */
   static getOriginalKey(imageId: string): string {
-    return `images/${imageId}`;
+    return `${env.ORIGINAL_IMAGE_PATH === '/' ? `/${imageId}` : `${env.ORIGINAL_IMAGE_PATH}/${imageId}`}`;
   }
 
   /**
@@ -41,21 +41,17 @@ export class S3Service {
     const extension = ext[ext.length - 1];
 
     // Build new variant
-    return `resized_images/${name}___${width}*${height}.${extension}`;
+    return `${env.RESIZED_IMAGE_PATH}/${name}___${width}*${height}.${extension}`;
   }
 
   /**
    * Generate public S3 URL for a key
    */
   static getPublicUrl(s3Key: string): string {
-    const region = S3_CONFIG.region;
-    const bucket = S3_CONFIG.bucket;
-
-    // Standard S3 public URL format
     // URL encode the key to handle special characters
     const encodedKey = s3Key.split('/').map(encodeURIComponent).join('/');
 
-    return `https://${bucket}.s3.${region}.amazonaws.com/${encodedKey}`;
+    return `${env.S3_PUBLIC_URL}/${encodedKey}`;
   }
 
   /**

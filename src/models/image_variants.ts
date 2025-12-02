@@ -6,6 +6,11 @@ export enum ImageStatus {
   Ready = 'ready',
   Failed = 'failed',
 }
+export enum ImageFormats {
+  PNG = 'png',
+  JPEG = 'jpeg',
+  WEBP = 'webp',
+}
 
 export interface IImageVariant extends Document {
   imageId: string;
@@ -20,6 +25,7 @@ export interface IImageVariant extends Document {
   failedReason?: string | null;
   failedAt?: Date | null;
   requeueCount: number; // how many times the job has been requeued
+  imageFormat: ImageFormats;
 }
 
 const ImageVariantSchema = new Schema<IImageVariant>(
@@ -80,6 +86,12 @@ const ImageVariantSchema = new Schema<IImageVariant>(
       default: 0,
       min: 0,
     },
+    imageFormat: {
+      type: String,
+      enum: Object.values(ImageFormats),
+      default: ImageFormats.WEBP,
+      required: true,
+    },
   },
   {
     collection: 'image_variants',
@@ -88,7 +100,7 @@ const ImageVariantSchema = new Schema<IImageVariant>(
 );
 
 // Unique combination of imageId + width + height
-ImageVariantSchema.index({ imageId: 1, width: 1, height: 1 }, { unique: true });
+ImageVariantSchema.index({ imageId: 1, width: 1, height: 1, imageFormat: 1 }, { unique: true });
 
 // Index by status for faster queries on queued/processing/failed
 ImageVariantSchema.index({ status: 1 });
