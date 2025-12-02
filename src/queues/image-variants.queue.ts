@@ -1,5 +1,6 @@
 import { Queue } from 'bullmq';
 import { redisConnection } from '../config/cache';
+import type { ImageFormats } from '../models/image_variants';
 
 export interface ImageVariantJobData {
   imageId: string;
@@ -8,6 +9,7 @@ export interface ImageVariantJobData {
   originalS3Key: string;
   variantS3Key: string;
   mongoDocId: string; // To update the document after processing
+  imageFormat: ImageFormats;
 }
 
 // Create the queue
@@ -38,7 +40,7 @@ export async function addImageVariantJob(data: ImageVariantJobData): Promise<voi
         type: 'exponential',
         delay: 5000,
       },
-      jobId: `${data.imageId}_${data.width}x${data.height}.${data.mongoDocId}.${Date.now()}`, // Prevents duplicate jobs
+      jobId: `${data.imageId}_${data.width}x${data.height}.${data.imageFormat}.${data.mongoDocId}.${Date.now()}`, // Prevents duplicate jobs
       removeOnComplete: true,
       removeOnFail: false,
     });

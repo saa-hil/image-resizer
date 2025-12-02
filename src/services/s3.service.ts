@@ -3,9 +3,12 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   HeadObjectCommand,
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 import { env } from '../config/env';
+import type { ImageFormats } from '../models/image_variants';
 
 const S3_CONFIG = {
   region: env.AWS_REGION,
@@ -25,23 +28,21 @@ export class S3Service {
    * Get the original S3 key for an image
    */
   static getOriginalKey(imageId: string): string {
-    return `${env.ORIGINAL_IMAGE_PATH === '/' ? `/${imageId}` : `${env.ORIGINAL_IMAGE_PATH}/${imageId}`}`;
+    return `${env.ORIGINAL_IMAGE_PATH}/${imageId}`;
   }
 
   /**
    * Get the variant S3 key for an image
    */
-  static getVariantKey(imageId: string, width: number, height: number) {
+  static getVariantKey(imageId: string, width: number, height: number, format: ImageFormats) {
     // Split name and extension
     const dotIndex = imageId.lastIndexOf('.');
     if (dotIndex === -1) throw new Error('Invalid filename, missing extension');
 
     const name = imageId.slice(0, dotIndex);
-    const ext = imageId.split('.');
-    const extension = ext[ext.length - 1];
 
     // Build new variant
-    return `${env.RESIZED_IMAGE_PATH}/${name}___${width}*${height}.${extension}`;
+    return `${env.RESIZED_IMAGE_PATH}/${name}___${width}x${height}.${format}`;
   }
 
   /**
@@ -52,14 +53,6 @@ export class S3Service {
     const encodedKey = s3Key.split('/').map(encodeURIComponent).join('/');
 
     return `${env.S3_PUBLIC_URL}/${encodedKey}`;
-  }
-
-  /**
-   * Extract file extension from imageId
-   */
-  private static getExtension(imageId: string): string {
-    const parts = imageId.split('.');
-    return parts.length > 1 ? (parts[parts.length - 1] as string) : 'jpg';
   }
 
   /**
@@ -129,6 +122,7 @@ export class S3Service {
    */
   static async uploadImage(s3Key: string, buffer: Buffer, contentType: string): Promise<void> {
     try {
+      console.log('Uploading Buffer with content Type', contentType);
       const command = new PutObjectCommand({
         Bucket: S3_CONFIG.bucket,
         Key: s3Key,
@@ -146,11 +140,46 @@ export class S3Service {
     }
   }
 
+  static async deleteObject(s3Key: string): Promise<void> {
+    try {
+      console.log(`Deleting S3 object: ${s3Key}`);
+      const command = new DeleteObjectCommand({
+        Bucket: S3_CONFIG.bucket,
+        Key: s3Key,
+      });
+
+      await s3Client.send(command);
+      console.log(`Successfully deleted S3 object: ${s3Key}`);
+    } catch (error) {
+      console.error(`Failed to delete S3 object: ${s3Key}`, error);
+      throw new Error(`S3 delete failed: ${s3Key}`);
+    }
+  }
+
+  static async deleteObjects(s3Keys: string[]): Promise<void> {
+    try {
+      console.log(`Deleting S3 objects: ${s3Keys}`);
+      const command = new DeleteObjectsCommand({
+        Bucket: S3_CONFIG.bucket,
+        Delete: {
+          Objects: s3Keys.map((s3Key) => ({ Key: s3Key })),
+        },
+      });
+
+      await s3Client.send(command);
+      console.log(`Successfully deleted S3 objects: ${s3Keys}`);
+    } catch (error) {
+      console.error(`Failed to delete S3 objects: ${s3Keys}`, error);
+      throw new Error(`S3 delete failed: ${s3Keys}`);
+    }
+  }
+
   /**
    * Check if an object exists in S3
    */
   static async exists(s3Key: string): Promise<boolean> {
     try {
+      console.log(`Checking S3 object existence: ${s3Key}`);
       const command = new HeadObjectCommand({
         Bucket: S3_CONFIG.bucket,
         Key: s3Key,

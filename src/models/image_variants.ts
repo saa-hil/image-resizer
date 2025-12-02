@@ -10,6 +10,7 @@ export enum ImageFormats {
   PNG = 'png',
   JPEG = 'jpeg',
   WEBP = 'webp',
+  JPG = 'jpg',
 }
 
 export interface IImageVariant extends Document {
@@ -99,7 +100,7 @@ const ImageVariantSchema = new Schema<IImageVariant>(
   },
 );
 
-// Unique combination of imageId + width + height
+// Unique combination of imageId + width + height + imageFormat
 ImageVariantSchema.index({ imageId: 1, width: 1, height: 1, imageFormat: 1 }, { unique: true });
 
 // Index by status for faster queries on queued/processing/failed

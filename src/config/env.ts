@@ -7,7 +7,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://localhost:5173'),
   AWS_REGION: z.string().default('ap-south-1'),
-  S3_BUCKET_NAME: z.string().default('image-resizer-1764492037'),
+  S3_BUCKET_NAME: z.string().default('image-resizer-etc'),
   AWS_ACCESS_KEY_ID: z.string().default('AKIAVJWJWJWJWJWJWJWJ'),
   AWS_SECRET_ACCESS_KEY: z.string().default('AKIAVJWJWJWJWJWJWJWJ'),
   REDIS_HOST: z.string().default('localhost'),

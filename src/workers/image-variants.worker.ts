@@ -4,7 +4,7 @@ import { redisConnection } from '../config/cache';
 import { imageVariantQueue, type ImageVariantJobData } from '../queues/image-variants.queue';
 import { S3Service } from '../services/s3.service';
 import { ImageVariants, ImageStatus } from '../models/image_variants';
-import sharp from 'sharp';
+import sharp, { type FormatEnum } from 'sharp';
 import { getContentType } from '../utils/helpers';
 import { connectDB } from '../config/db';
 
@@ -21,13 +21,21 @@ export const imageVariantWorker = new Worker<ImageVariantJobData>(
     // Ensure connection at the start of each job
     await ensureMongoConnection();
 
-    const { imageId, width, height, originalS3Key, variantS3Key, mongoDocId } = job.data;
+    const { imageId, width, height, originalS3Key, variantS3Key, mongoDocId, imageFormat } =
+      job.data;
 
-    console.log(`Processing job ${job.id}: ${imageId} ${width}x${height}`);
-    console.log(`Job Id: ${mongoDocId}`);
+    console.log(`Processing job ${job.id}: ${imageId} ${width}x${height}.${imageFormat}`);
 
     try {
       // Update status to processing
+      // First check if document exist;
+      const docExists = await ImageVariants.findById(mongoDocId);
+
+      if (!docExists) {
+        console.error(`MongoDB document not found: ${mongoDocId}`);
+        return;
+      }
+
       const processingUpdate = await ImageVariants.findByIdAndUpdate(
         mongoDocId,
         { status: ImageStatus.Processing },
@@ -38,23 +46,19 @@ export const imageVariantWorker = new Worker<ImageVariantJobData>(
         throw new Error(`MongoDB document not found: ${mongoDocId}`);
       }
 
-      console.log(`Updated status to Processing for doc: ${mongoDocId}`);
-
       // Step 1: Download original image from S3
-      console.log(`Downloading original: ${originalS3Key}`);
       const originalBuffer = await S3Service.downloadImageAsBuffer(originalS3Key);
 
       // Step 2: Resize image using Sharp
-      console.log(`Resizing to ${width}x${height}`);
       const resizedBuffer = await sharp(originalBuffer)
         .resize(width, height, {
           fit: 'cover',
           position: 'center',
         })
+        .toFormat(imageFormat)
         .toBuffer();
 
       // Step 3: Upload variant to S3
-      console.log(`Uploading variant: ${variantS3Key}`);
       const contentType = await getContentType(resizedBuffer);
       await S3Service.uploadImage(variantS3Key, resizedBuffer, contentType);
 
@@ -71,8 +75,6 @@ export const imageVariantWorker = new Worker<ImageVariantJobData>(
       if (!successUpdate) {
         throw new Error(`Failed to update MongoDB document: ${mongoDocId}`);
       }
-
-      console.log(`Successfully processed: ${imageId} ${width}x${height}`);
 
       return {
         success: true,
