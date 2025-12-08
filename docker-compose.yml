@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: neomatrix24/image-resizer:1.0.0
     container_name: bun-app
     ports:
       - '3000:3000'

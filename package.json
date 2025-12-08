@@ -2,6 +2,7 @@
   "name": "image-resizer",
   "module": "index.ts",
   "type": "module",
+  "version": "1.0.0",
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts src/workers/image-variants.worker.ts --outdir ./dist --target bun",
