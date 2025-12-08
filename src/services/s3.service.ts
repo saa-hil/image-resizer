@@ -28,7 +28,7 @@ export class S3Service {
    * Get the original S3 key for an image
    */
   static getOriginalKey(imageId: string): string {
-    return `${env.ORIGINAL_IMAGE_PATH}/${imageId}`;
+    return imageId;
   }
 
   /**

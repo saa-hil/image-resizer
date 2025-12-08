@@ -11,10 +11,9 @@ export class ImageController {
    */
   static async getImage(ctx: Context) {
     try {
-      const paramsResults = ImageParamsSchema.safeParse(ctx.params);
       const queryResults = ImageQuerySchema.safeParse(ctx.query);
-
-      if (!paramsResults.success || !queryResults.success) {
+      const path = ctx.path;
+      if (!queryResults.success) {
         ctx.set.status = 400;
         return {
           error: 'Invalid query parameters or request',
@@ -22,11 +21,14 @@ export class ImageController {
         };
       }
 
-      const { imageId } = ctx.params as { imageId: string };
       const { w, h } = ctx.query as { w?: string; h?: string };
       const { format } = ctx.query as { format?: ImageFormats };
       const { force_resize } = ctx.query as { force_resize?: string };
 
+      // Remove First Slash from path
+      const pathWithoutSlash = path.startsWith('/') ? path.slice(1) : path;
+
+      const imageId = pathWithoutSlash;
       //Set Image Format WebP if no format is provided
       const imageFormat = format || ('webp' as ImageFormats);
 
@@ -94,10 +96,11 @@ export class ImageController {
    */
   static async deleteImage(ctx: Context) {
     try {
-      const paramsResults = ImageParamsSchema.safeParse(ctx.params);
+      const path = ctx.path;
+      const pathWithoutSlash = path.startsWith('/') ? path.slice(1) : path;
       const queryResults = ImageQuerySchema.safeParse(ctx.query);
 
-      if (!paramsResults.success || !queryResults.success) {
+      if (!queryResults.success) {
         ctx.set.status = 400;
         return {
           error: 'Invalid query parameters or request',
@@ -105,7 +108,7 @@ export class ImageController {
         };
       }
 
-      const { imageId } = ctx.params as { imageId: string };
+      const imageId = pathWithoutSlash;
       const { w, h } = ctx.query as { w?: string; h?: string };
       const { format } = ctx.query as { format?: ImageFormats };
 
