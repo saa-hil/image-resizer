@@ -1,18 +1,19 @@
 import { type Context } from 'elysia';
 import { ImageService } from '../services/image.service';
 import { S3Service } from '../services/s3.service';
-import { ImageParamsSchema, ImageQuerySchema } from '../utils/helpers';
+import { ImageQuerySchema } from '../utils/helpers';
 import type { ImageFormats } from '../models/image_variants';
 
 export class ImageController {
   /**
    * Handle image request
-   * GET /images/:imageId?w=800&h=600
+   * GET /:imageId?w=800&h=600
    */
   static async getImage(ctx: Context) {
     try {
       const queryResults = ImageQuerySchema.safeParse(ctx.query);
       const path = ctx.path;
+      const ip = (ctx as unknown as { ip: string }).ip;
       if (!queryResults.success) {
         ctx.set.status = 400;
         return {
@@ -50,6 +51,7 @@ export class ImageController {
           height,
           imageFormat,
           forceResize,
+          ip,
         );
         s3Key = result.s3Key;
         isProcessing = result.shouldStreamOriginal;

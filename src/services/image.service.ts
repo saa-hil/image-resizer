@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { S3Service } from './s3.service';
 import { ImageVariants, ImageStatus, ImageFormats } from '../models/image_variants';
 import { addImageVariantJob } from '../queues/image-variants.queue';
+import { env } from '../config/env';
 
 export class ImageService {
   /**
@@ -14,13 +15,13 @@ export class ImageService {
     height: number,
     format: ImageFormats,
     forceResize: boolean,
+    ip: string,
   ): Promise<{
     s3Key: string;
     shouldStreamOriginal: boolean;
   }> {
     try {
       if (forceResize) {
-        console.log('Force Resize True');
         await this.handleForceResize(imageId, width, height, format, forceResize);
       }
 
@@ -64,6 +65,16 @@ export class ImageService {
       const originalExists = await S3Service.exists(originalS3Key);
       if (!originalExists) {
         throw new Error(`Original image not found: ${imageId}`);
+      }
+
+      // Check if IP is allowed to add job, otherwise give original image
+      const allowedIps = env.ALLOWED_IPS.split(',');
+      if (!allowedIps.includes(ip)) {
+        console.log(`IP ${ip} not allowed, serving existing variant if exist otherwise original`);
+        return {
+          s3Key: existingVariant ? existingVariant.s3Key : originalS3Key,
+          shouldStreamOriginal: existingVariant ? false : true,
+        };
       }
 
       // Create MongoDB record

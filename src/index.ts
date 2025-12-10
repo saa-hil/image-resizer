@@ -5,6 +5,7 @@ import { rateLimit } from 'elysia-rate-limit';
 import { connectDB, closeDB } from './config/db';
 import { routes } from './routes/index';
 import { env } from './config/env';
+import { ip } from 'elysia-ip';
 
 const app = new Elysia()
   .use(
@@ -20,6 +21,23 @@ const app = new Elysia()
       duration: 60000, // 1 minute
     }),
   )
+  .use(
+    ip({
+      checkHeaders: [
+        'CF-Connecting-IP',
+        'X-Real-IP',
+        'x-client-ip',
+        'x-cluster-client-ip',
+        'Forwarded-For',
+        'True-Client-IP',
+        'appengine-user-ip',
+        'cf-pseudo-ipv4',
+        'forwarded',
+        'x-forwarded',
+        'X-Forwarded-For',
+      ],
+    }),
+  )
   .onStart(async () => {
     await connectDB();
     console.log(`Server running on port ${env.APP_PORT}`);
@@ -29,6 +47,7 @@ const app = new Elysia()
     console.log('Database connection closed');
   })
   .get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }))
+  .get('/ip', ({ ip }: { ip: string }) => ({ ip }))
   .use(routes)
   .onError(({ code, error, set }) => {
     console.error('Error:', error);
@@ -41,7 +60,10 @@ const app = new Elysia()
     set.status = 500;
     return { error: 'Internal server error' };
   })
-  .listen(env.APP_PORT);
+  .listen({
+    hostname: '0.0.0.0',
+    port: env.APP_PORT,
+  });
 
 console.log(`Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
 

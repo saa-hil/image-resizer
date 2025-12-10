@@ -20,6 +20,7 @@
     "bullmq": "^5.65.0",
     "elysia": "^1.0.0",
     "elysia-helmet": "^1.0.1",
+    "elysia-ip": "^1.0.10",
     "elysia-rate-limit": "^3.0.0",
     "ioredis": "^5.8.2",
     "mongoose": "^9.0.0",

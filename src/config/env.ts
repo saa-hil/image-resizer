@@ -14,8 +14,9 @@ const envSchema = z.object({
   REDIS_PORT: z.string().default('6379'),
   REDIS_PASSWORD: z.string().default(''),
   ORIGINAL_IMAGE_PATH: z.string().default('/'),
-  RESIZED_IMAGE_PATH: z.string().default('resized_images'),
+  RESIZED_IMAGE_PATH: z.string().default('/'),
   S3_PUBLIC_URL: z.string().default(''),
+  ALLOWED_IPS: z.string().default('http://localhost:3000,http://localhost:5173'),
 });
 
 const parseEnv = () => {
