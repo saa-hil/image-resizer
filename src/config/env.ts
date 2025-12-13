@@ -17,6 +17,9 @@ const envSchema = z.object({
   RESIZED_IMAGE_PATH: z.string().default('/'),
   S3_PUBLIC_URL: z.string().default(''),
   ALLOWED_IPS: z.string().default('http://localhost:3000,http://localhost:5173'),
+  RATE_LIMIT_DURATION: z.string().default('60000'),
+  RATE_LIMIT_MAX: z.string().default('100'),
+  RATE_LIMIT_WHITELIST_IPS: z.string().default('http://localhost:3000,http://localhost:5173'),
 });
 
 const parseEnv = () => {

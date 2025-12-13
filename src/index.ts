@@ -1,9 +1,8 @@
 import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
 import { helmet } from 'elysia-helmet';
-import { rateLimit } from 'elysia-rate-limit';
 import { connectDB, closeDB } from './config/db';
-import { routes } from './routes/index';
+import { routes } from './routes/index'; // Rate limiting is inside routes
 import { env } from './config/env';
 import { ip } from 'elysia-ip';
 
@@ -15,12 +14,6 @@ const app = new Elysia()
     }),
   )
   .use(helmet())
-  .use(
-    rateLimit({
-      max: 100,
-      duration: 60000, // 1 minute
-    }),
-  )
   .use(
     ip({
       checkHeaders: [
@@ -51,7 +44,6 @@ const app = new Elysia()
   .use(routes)
   .onError(({ code, error, set }) => {
     console.error('Error:', error);
-
     if (code === 'NOT_FOUND') {
       set.status = 404;
       return { error: 'Route not found' };
@@ -60,10 +52,7 @@ const app = new Elysia()
     set.status = 500;
     return { error: 'Internal server error' };
   })
-  .listen({
-    hostname: '0.0.0.0',
-    port: env.APP_PORT,
-  });
+  .listen(env.APP_PORT);
 
 console.log(`Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
 
