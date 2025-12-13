@@ -42,7 +42,7 @@ export class S3Service {
     const name = imageId.slice(0, dotIndex);
 
     // Build new variant
-    return `${name}___${width}x${height}.${format}`;
+    return `${env.RESIZED_IMAGE_PATH}/${name}___${width}x${height}.${format}`;
   }
 
   /**

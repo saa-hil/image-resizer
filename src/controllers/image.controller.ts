@@ -13,7 +13,9 @@ export class ImageController {
     try {
       const queryResults = ImageQuerySchema.safeParse(ctx.query);
       const path = ctx.path;
-      const ip = (ctx as unknown as { ip: string }).ip;
+      // const ip = (ctx as unknown as { ip: string }).ip;
+      const ip = ctx.headers['x-real-ip'] || 'unknwon';
+      console.log('IP is', ip);
       if (!queryResults.success) {
         ctx.set.status = 400;
         return {
