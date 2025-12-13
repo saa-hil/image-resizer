@@ -52,7 +52,10 @@ const app = new Elysia()
     set.status = 500;
     return { error: 'Internal server error' };
   })
-  .listen(env.APP_PORT);
+  .listen({
+    hostname: '0.0.0.0',
+    port: env.APP_PORT,
+  });
 
 console.log(`Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
 
