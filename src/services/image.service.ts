@@ -69,7 +69,7 @@ export class ImageService {
 
       // Check if IP is allowed to add job, otherwise give original image
       const allowedIps = env.ALLOWED_IPS.split(',');
-      if (!allowedIps.includes(ip)) {
+      if (allowedIps.length > 0 && !allowedIps.includes(ip)) {
         console.log(`IP ${ip} not allowed, serving existing variant if exist otherwise original`);
         return {
           s3Key: existingVariant ? existingVariant.s3Key : originalS3Key,
