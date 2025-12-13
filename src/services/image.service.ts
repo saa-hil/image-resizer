@@ -69,6 +69,8 @@ export class ImageService {
 
       // Check if IP is allowed to add job, otherwise give original image
       const allowedIps = env.ALLOWED_IPS.split(',');
+      // remove empty strings
+      allowedIps.filter((ip) => ip !== '');
       if (allowedIps.length > 0 && !allowedIps.includes(ip)) {
         console.log(`IP ${ip} not allowed, serving existing variant if exist otherwise original`);
         return {
