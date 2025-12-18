@@ -3,6 +3,8 @@ import { ImageService } from '../services/image.service';
 import { S3Service } from '../services/s3.service';
 import { ImageQuerySchema } from '../utils/helpers';
 import type { ImageFormats } from '../models/image_variants';
+import logger from '../utils/logger';
+import { env } from '../config/env';
 
 export class ImageController {
   /**
@@ -15,7 +17,6 @@ export class ImageController {
       const path = ctx.path;
       // const ip = (ctx as unknown as { ip: string }).ip;
       const ip = ctx.headers['x-real-ip'] || 'unknwon';
-      console.log('IP is', ip);
       if (!queryResults.success) {
         ctx.set.status = 400;
         return {
@@ -30,6 +31,30 @@ export class ImageController {
 
       // Remove First Slash from path
       const pathWithoutSlash = path.startsWith('/') ? path.slice(1) : path;
+
+      let resizedPathPrefix = env.RESIZED_IMAGE_PATH.startsWith('/')
+        ? env.RESIZED_IMAGE_PATH.slice(1)
+        : env.RESIZED_IMAGE_PATH;
+
+      if (resizedPathPrefix.endsWith('/')) {
+        resizedPathPrefix = resizedPathPrefix.slice(0, -1);
+      }
+
+      if (
+        resizedPathPrefix &&
+        (pathWithoutSlash === resizedPathPrefix ||
+          pathWithoutSlash.startsWith(`${resizedPathPrefix}/`))
+      ) {
+        logger.warn('Access on S3 Image Resizer Path Denied', {
+          path: pathWithoutSlash,
+          resizedPathPrefix,
+        });
+        ctx.set.status = 403;
+        return {
+          error: 'Forbidden',
+          message: 'Access Denied',
+        };
+      }
 
       const imageId = pathWithoutSlash;
       //Set Image Format WebP if no format is provided
@@ -78,7 +103,7 @@ export class ImageController {
 
       return null;
     } catch (error: any) {
-      console.error('Error serving image:', error);
+      logger.error('Error serving image:', error);
 
       if (error.message.includes('not found')) {
         ctx.set.status = 404;
@@ -124,7 +149,7 @@ export class ImageController {
       await ImageService.deleteImage(imageId, width, height, imageFormat);
       return { message: 'Image deleted successfully' };
     } catch (error: any) {
-      console.error('Error deleting image:', error);
+      logger.error('Error deleting image:', error);
       ctx.set.status = 500;
       return {
         error: 'Internal server error',

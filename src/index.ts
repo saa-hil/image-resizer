@@ -5,6 +5,7 @@ import { connectDB, closeDB } from './config/db';
 import { routes } from './routes/index'; // Rate limiting is inside routes
 import { env } from './config/env';
 import { ip } from 'elysia-ip';
+import logger from './utils/logger';
 
 const app = new Elysia()
   .use(
@@ -33,17 +34,17 @@ const app = new Elysia()
   )
   .onStart(async () => {
     await connectDB();
-    console.log(`Server running on port ${env.APP_PORT}`);
+    logger.info(`Server running on port ${env.APP_PORT}`);
   })
   .onStop(async () => {
     await closeDB();
-    console.log('Database connection closed');
+    logger.info('Database connection closed');
   })
   .get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }))
   .get('/ip', ({ ip }: { ip: string }) => ({ ip }))
   .use(routes)
   .onError(({ code, error, set }) => {
-    console.error('Error:', error);
+    logger.error('Error:', error);
     if (code === 'NOT_FOUND') {
       set.status = 404;
       return { error: 'Route not found' };
@@ -57,16 +58,16 @@ const app = new Elysia()
     port: env.APP_PORT,
   });
 
-console.log(`Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
+logger.info(`Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
 
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully...');
+  logger.info('SIGTERM received, shutting down gracefully...');
   await app.stop();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully...');
+  logger.info('SIGINT received, shutting down gracefully...');
   await app.stop();
   process.exit(0);
 });

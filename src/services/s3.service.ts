@@ -9,6 +9,7 @@ import {
 import { Readable } from 'stream';
 import { env } from '../config/env';
 import type { ImageFormats } from '../models/image_variants';
+import logger from '../utils/logger';
 
 const S3_CONFIG = {
   region: env.AWS_REGION,
@@ -81,7 +82,7 @@ export class S3Service {
 
       return Buffer.concat(chunks);
     } catch (error) {
-      console.error(`Failed to download image from S3: ${s3Key}`, error);
+      logger.error(`Failed to download image from S3: ${s3Key}`, error);
       throw new Error(`S3 download failed: ${s3Key}`);
     }
   }
@@ -112,7 +113,7 @@ export class S3Service {
         contentLength: response.ContentLength || 0,
       };
     } catch (error) {
-      console.error(`Failed to download image from S3: ${s3Key}`, error);
+      logger.error(`Failed to download image from S3: ${s3Key}`, error);
       throw new Error(`S3 download failed: ${s3Key}`);
     }
   }
@@ -122,7 +123,7 @@ export class S3Service {
    */
   static async uploadImage(s3Key: string, buffer: Buffer, contentType: string): Promise<void> {
     try {
-      console.log('Uploading Buffer with content Type', contentType);
+      logger.info('Uploading Buffer with content Type', { contentType });
       const command = new PutObjectCommand({
         Bucket: S3_CONFIG.bucket,
         Key: s3Key,
@@ -133,32 +134,32 @@ export class S3Service {
       });
 
       await s3Client.send(command);
-      console.log(`Successfully uploaded image to S3: ${s3Key}`);
+      logger.info(`Successfully uploaded image to S3: ${s3Key}`);
     } catch (error) {
-      console.error(`Failed to upload image to S3: ${s3Key}`, error);
+      logger.error(`Failed to upload image to S3: ${s3Key}`, error);
       throw new Error(`S3 upload failed: ${s3Key}`);
     }
   }
 
   static async deleteObject(s3Key: string): Promise<void> {
     try {
-      console.log(`Deleting S3 object: ${s3Key}`);
+      logger.info(`Deleting S3 object: ${s3Key}`);
       const command = new DeleteObjectCommand({
         Bucket: S3_CONFIG.bucket,
         Key: s3Key,
       });
 
       await s3Client.send(command);
-      console.log(`Successfully deleted S3 object: ${s3Key}`);
+      logger.info(`Successfully deleted S3 object: ${s3Key}`);
     } catch (error) {
-      console.error(`Failed to delete S3 object: ${s3Key}`, error);
+      logger.error(`Failed to delete S3 object: ${s3Key}`, error);
       throw new Error(`S3 delete failed: ${s3Key}`);
     }
   }
 
   static async deleteObjects(s3Keys: string[]): Promise<void> {
     try {
-      console.log(`Deleting S3 objects: ${s3Keys}`);
+      logger.info(`Deleting S3 objects: ${s3Keys}`);
       const command = new DeleteObjectsCommand({
         Bucket: S3_CONFIG.bucket,
         Delete: {
@@ -167,9 +168,9 @@ export class S3Service {
       });
 
       await s3Client.send(command);
-      console.log(`Successfully deleted S3 objects: ${s3Keys}`);
+      logger.info(`Successfully deleted S3 objects: ${s3Keys}`);
     } catch (error) {
-      console.error(`Failed to delete S3 objects: ${s3Keys}`, error);
+      logger.error(`Failed to delete S3 objects: ${s3Keys}`, error);
       throw new Error(`S3 delete failed: ${s3Keys}`);
     }
   }
@@ -179,7 +180,7 @@ export class S3Service {
    */
   static async exists(s3Key: string): Promise<boolean> {
     try {
-      console.log(`Checking S3 object existence: ${s3Key}`);
+      logger.info(`Checking S3 object existence: ${s3Key}`);
       const command = new HeadObjectCommand({
         Bucket: S3_CONFIG.bucket,
         Key: s3Key,
@@ -191,7 +192,7 @@ export class S3Service {
       if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
         return false;
       }
-      console.error(`Failed to check S3 object existence: ${s3Key}`, error);
+      logger.error(`Failed to check S3 object existence: ${s3Key}`, error);
       throw error;
     }
   }

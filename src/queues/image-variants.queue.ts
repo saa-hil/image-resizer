@@ -1,6 +1,7 @@
-import { Queue } from 'bullmq';
+import { Queue, type ConnectionOptions } from 'bullmq';
 import { redisConnection } from '../config/cache';
 import type { ImageFormats } from '../models/image_variants';
+import logger from '../utils/logger';
 
 export interface ImageVariantJobData {
   imageId: string;
@@ -14,7 +15,7 @@ export interface ImageVariantJobData {
 
 // Create the queue
 export const imageVariantQueue = new Queue<ImageVariantJobData>('image-variant-processing', {
-  connection: redisConnection,
+  connection: redisConnection as ConnectionOptions,
   defaultJobOptions: {
     attempts: 3, // Retry failed jobs up to 3 times
     backoff: {
@@ -44,9 +45,9 @@ export async function addImageVariantJob(data: ImageVariantJobData): Promise<voi
       removeOnComplete: true,
       removeOnFail: false,
     });
-    console.log(`Added job to queue: ${data.imageId} ${data.width}x${data.height}`);
+    logger.info(`Added job to queue: ${data.imageId} ${data.width}x${data.height}`);
   } catch (error) {
-    console.error('Failed to add job to queue:', error);
+    logger.error('Failed to add job to queue:', error);
     throw error;
   }
 }

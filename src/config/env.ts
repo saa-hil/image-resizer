@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import logger from '../utils/logger';
 
 const envSchema = z.object({
   APP_PORT: z.string().default('3000'),
@@ -13,7 +14,6 @@ const envSchema = z.object({
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.string().default('6379'),
   REDIS_PASSWORD: z.string().default(''),
-  ORIGINAL_IMAGE_PATH: z.string().default('/'),
   RESIZED_IMAGE_PATH: z.string().default('/'),
   S3_PUBLIC_URL: z.string().default(''),
   ALLOWED_IPS: z.string().default('http://localhost:3000,http://localhost:5173'),
@@ -26,10 +26,10 @@ const parseEnv = () => {
   try {
     return envSchema.parse(process.env);
   } catch (error) {
-    console.error('❌ Invalid environment variables:');
+    logger.error('❌ Invalid environment variables:');
     if (error instanceof z.ZodError) {
       error.errors.forEach((err) => {
-        console.error(`  - ${err.path.join('.')}: ${err.message}`);
+        logger.error(`  - ${err.path.join('.')}: ${err.message}`);
       });
     }
     process.exit(1);

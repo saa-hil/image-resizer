@@ -3,6 +3,7 @@ import { S3Service } from './s3.service';
 import { ImageVariants, ImageStatus, ImageFormats } from '../models/image_variants';
 import { addImageVariantJob } from '../queues/image-variants.queue';
 import { env } from '../config/env';
+import logger from '../utils/logger';
 
 export class ImageService {
   /**
@@ -58,8 +59,8 @@ export class ImageService {
       const variantS3Key = S3Service.getVariantKey(imageId, width, height, format);
       const s3Bucket = S3Service.getBucket();
 
-      console.log('Original S3 Key', originalS3Key);
-      console.log('Variant S3 Key', variantS3Key);
+      logger.info('Original S3 Key', { originalS3Key });
+      logger.info('Variant S3 Key', { variantS3Key });
 
       // Verify original exists
       const originalExists = await S3Service.exists(originalS3Key);
@@ -70,9 +71,9 @@ export class ImageService {
       // Check if IP is allowed to add job, otherwise give original image
       const allowedIps = env.ALLOWED_IPS.split(',');
       // remove empty strings
-      allowedIps.filter((ip) => ip !== '');
-      if (allowedIps.length > 0 && !allowedIps.includes(ip)) {
-        console.log(`IP ${ip} not allowed, serving existing variant if exist otherwise original`);
+      const filteredAllowedIps = allowedIps.map((ip) => ip.trim()).filter((ip) => ip !== '');
+      if (filteredAllowedIps.length > 0 && !filteredAllowedIps.includes(ip)) {
+        logger.info(`IP ${ip} not allowed, serving existing variant if exist otherwise original`);
         return {
           s3Key: existingVariant ? existingVariant.s3Key : originalS3Key,
           shouldStreamOriginal: existingVariant ? false : true,
@@ -109,7 +110,7 @@ export class ImageService {
         shouldStreamOriginal: true,
       };
     } catch (e) {
-      console.error('Error getting or creating image variant:', e);
+      logger.error('Error getting or creating image variant:', e);
       throw e;
     }
   }
@@ -150,10 +151,10 @@ export class ImageService {
 
       if (existingVariant) {
         await S3Service.deleteObject(existingVariant.s3Key);
-        console.log(`Deleted existing variant ${existingVariant.s3Key} from S3`);
+        logger.info(`Deleted existing variant ${existingVariant.s3Key} from S3`);
       }
     } catch (e) {
-      console.error('Error deleting existing variant:', e);
+      logger.error('Error deleting existing variant:', e);
       throw e;
     }
   }
@@ -187,7 +188,7 @@ export class ImageService {
         ...(format != null && { imageFormat: format }),
       });
     } catch (e) {
-      console.error('Error deleting images:', e);
+      logger.error('Error deleting images:', e);
       throw e;
     }
   }
