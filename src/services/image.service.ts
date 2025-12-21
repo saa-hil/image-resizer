@@ -81,17 +81,35 @@ export class ImageService {
       }
 
       // Create MongoDB record
-      const variantDoc = await ImageVariants.create({
-        imageId,
-        width,
-        height,
-        s3Key: variantS3Key,
-        s3Bucket,
-        status: ImageStatus.Queued,
-        originalS3Key,
-        fileSize: 0,
-        imageFormat: format,
-      });
+      let variantDoc;
+      try {
+        variantDoc = await ImageVariants.create({
+          imageId,
+          width,
+          height,
+          s3Key: variantS3Key,
+          s3Bucket,
+          status: ImageStatus.Queued,
+          originalS3Key,
+          fileSize: 0,
+          imageFormat: format,
+        });
+      } catch (error: any) {
+        // Handle Race Condition: Duplicate Key Error
+        if (error.code === 11000) {
+          logger.warn('Race condition detected: Variant already created by another request', {
+            imageId,
+            width,
+            height,
+            format,
+          });
+          return {
+            s3Key: originalS3Key,
+            shouldStreamOriginal: true,
+          };
+        }
+        throw error;
+      }
 
       // Add job to queue
       await addImageVariantJob({

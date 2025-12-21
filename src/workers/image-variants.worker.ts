@@ -297,17 +297,10 @@ export const imageVariantWorker = new Worker<ImageVariantJobData>(
   processImageVariant,
   {
     connection: redisConnection as ConnectionOptions,
-    concurrency: 3,
-    lockDuration: 180000,
+    concurrency: 2,
+    lockDuration: 300000,
     stalledInterval: 60000,
     maxStalledCount: 2,
-    lockRenewTime: 15000,
-    settings: {
-      backoffStrategy: (attemptsMade: number) => {
-        logger.info(`Backoff strategy: ${attemptsMade} attempts made`);
-        return Math.min(Math.pow(2, attemptsMade) * 1000, 30000);
-      },
-    },
   },
 );
 
