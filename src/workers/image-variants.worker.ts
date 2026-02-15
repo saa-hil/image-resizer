@@ -154,8 +154,7 @@ async function processImageVariant(job: Job<ImageVariantJobData>): Promise<{
     const resizedBuffer = await withTimeout(
       sharp(originalBuffer)
         .resize(width, height, {
-          fit: 'cover',
-          position: 'center',
+          fit: 'inside',
         })
         .toFormat(imageFormat)
         .toBuffer(),
